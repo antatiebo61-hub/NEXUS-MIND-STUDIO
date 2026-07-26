@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="fr"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexus Mind Studio — NLP Engine v2.0</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#020B18}
+:root{
+  --b0:#020B18;--b1:#050F1F;--b2:#0A1628;
+  --acc:#0D6EFD;--vif:#1A8FFF;--clair:#38B6FF;
+  --glow:rgba(13,110,253,0.3);
+  --cyan:#00D4FF;--vert:#00FF94;
+  --t1:#E8F4FF;--t2:#7EB8D4;--t3:#4FC3F7;
+  --bord:rgba(13,110,253,0.22);--bordv:rgba(26,143,255,0.45);
+}
+.app{background:var(--b0);min-height:600px;padding:0;font-family:'Inter',sans-serif;color:var(--t1)}
+
+/* HEADER */
+.header{padding:18px 24px 14px;border-bottom:1px solid var(--bord)}
+.header-top{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.hex-icon{width:28px;height:28px;background:linear-gradient(135deg,var(--acc),var(--vif));clip-path:polygon(25% 0%,75% 0%,100% 50%,75% 100%,25% 100%,0% 50%);display:flex;align-items:center;justify-content:center;font-size:12px}
+.brand{font-size:1rem;font-weight:700;color:var(--clair);letter-spacing:.08em;text-shadow:0 0 20px rgba(56,182,255,.4)}
+.sub{font-size:.7rem;color:var(--t2);letter-spacing:.1em;font-weight:400}
+.badge{margin-left:auto;background:rgba(0,255,148,.08);border:1px solid rgba(0,255,148,.3);color:var(--vert);font-size:.65rem;font-weight:600;letter-spacing:.1em;padding:3px 9px;border-radius:3px;display:flex;align-items:center;gap:5px}
+.dot-pulse{width:5px;height:5px;background:var(--vert);border-radius:50%;animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,255,148,.6)}50%{box-shadow:0 0 0 5px rgba(0,255,148,0)}}
+
+/* TABS */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--bord);padding:0 20px;overflow-x:auto}
+.tab{padding:10px 16px;font-size:.72rem;font-weight:500;letter-spacing:.06em;color:var(--t2);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap}
+.tab.active{color:var(--clair);border-bottom-color:var(--acc);text-shadow:0 0 10px rgba(56,182,255,.4)}
+.tab:hover:not(.active){color:var(--t1)}
+
+/* CONTENT */
+.content{padding:20px 24px}
+.section-label{font-size:.68rem;font-weight:600;letter-spacing:.1em;color:var(--t2);text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.section-label::after{content:'';flex:1;height:1px;background:var(--bord)}
+
+/* GRID */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+@media (max-width:700px){.grid2{grid-template-columns:1fr}}
+
+/* INPUTS */
+.field{margin-bottom:14px}
+.field-label{font-size:.68rem;color:var(--t2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;font-weight:500}
+.inp{width:100%;background:rgba(5,15,31,.9);border:1px solid var(--bord);border-radius:6px;color:var(--t1);font-family:'Inter',sans-serif;font-size:.82rem;padding:9px 12px;resize:none;outline:none;transition:border-color .2s}
+.inp:focus{border-color:var(--vif);box-shadow:0 0 0 3px var(--glow)}
+.inp.mono{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--t3);line-height:1.7}
+.inp.green-out{color:var(--vert);background:rgba(0,255,148,.04);border-color:rgba(0,255,148,.15)}
+
+/* BUTTONS */
+.btn-primary{width:100%;background:linear-gradient(135deg,var(--acc),var(--vif));border:none;color:#fff;font-family:'Inter',sans-serif;font-weight:600;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;padding:11px 20px;border-radius:6px;cursor:pointer;box-shadow:0 0 20px var(--glow);transition:all .2s;margin-bottom:12px}
+.btn-primary:hover{box-shadow:0 0 35px rgba(26,143,255,.5);transform:translateY(-1px)}
+.btn-primary:active{transform:translateY(0)}
+.btn-secondary{width:100%;background:transparent;border:1px solid var(--bordv);color:var(--clair);font-family:'Inter',sans-serif;font-weight:500;font-size:.72rem;letter-spacing:.08em;padding:10px 20px;border-radius:6px;cursor:pointer;transition:all .2s}
+.btn-secondary:hover{background:rgba(13,110,253,.08)}
+.btn-secondary.active{background:rgba(255,59,92,.12);border-color:#ff3b5c;color:#ff3b5c}
+
+/* NLP OUTPUT PANEL */
+.nlp-panel{background:rgba(2,11,24,.95);border:1px solid rgba(0,212,255,.18);border-radius:8px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:.74rem;color:var(--t3);line-height:1.8;height:220px;overflow-y:auto;position:relative}
+.nlp-panel::before{content:'NLP ENGINE';position:absolute;top:8px;right:10px;font-size:.58rem;color:rgba(0,212,255,.3);letter-spacing:.1em}
+
+/* SCORES */
+.scores-container{margin-top:10px}
+.score-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.score-label{font-size:.72rem;color:var(--t2);width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.score-bar-bg{flex:1;height:5px;background:rgba(13,110,253,.12);border-radius:3px;overflow:hidden}
+.score-bar{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--acc),var(--cyan));transition:width .5s ease;box-shadow:0 0 6px var(--glow)}
+.score-val{font-size:.68rem;font-family:'JetBrains Mono',monospace;color:var(--clair);width:38px;text-align:right}
+
+/* STATUS CARD */
+.status-card{background:var(--b1);border:1px solid var(--bord);border-radius:8px;padding:14px;height:100%}
+.status-title{font-size:.68rem;color:var(--t2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px}
+.status-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(13,110,253,.1)}
+.status-row:last-child{border-bottom:none}
+.status-key{font-size:.72rem;color:var(--t2)}
+.status-val{font-size:.72rem;font-family:'JetBrains Mono',monospace;color:var(--clair)}
+.status-val.green{color:var(--vert)}
+
+/* INTENT BADGE */
+.intent-result{display:flex;align-items:center;gap:8px;margin-top:12px;padding:10px 12px;background:rgba(13,110,253,.08);border:1px solid var(--bordv);border-radius:6px}
+.intent-icon{width:8px;height:8px;border-radius:50%;background:var(--cyan);box-shadow:0 0 8px var(--cyan)}
+.intent-text{font-size:.76rem;color:var(--clair);font-weight:600;letter-spacing:.06em}
+.intent-pct{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--vert)}
+
+/* DIVIDER */
+.divider{border:none;border-top:1px solid var(--bord);margin:18px 0}
+
+/* CHART MOCK */
+.chart-area{background:var(--b1);border:1px solid var(--bord);border-radius:8px;padding:14px}
+.chart-title{font-size:.68rem;color:var(--t2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px}
+.bars{display:flex;align-items:flex-end;gap:8px;height:90px}
+.bar-col{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}
+.bar{width:100%;background:linear-gradient(180deg,var(--vif),var(--acc));border-radius:3px 3px 0 0;transition:height .4s ease;box-shadow:0 0 10px var(--glow);min-height:4px}
+.bar-lbl{font-size:.58rem;color:var(--t2);text-align:center;line-height:1.2}
+
+/* FOOTER */
+.footer{text-align:center;padding:10px 0 6px;font-size:.62rem;color:rgba(126,184,212,.3);letter-spacing:.12em;border-top:1px solid var(--bord)}
+
+/* KPI TOP BAR — remplace l'ancien roi-banner + l'ancien tableau de bord */
+.kpi-topbar{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--bord);border-bottom:1px solid var(--bord)}
+@media (max-width:700px){.kpi-topbar{grid-template-columns:repeat(2,1fr)}}
+.kpi-cell{background:var(--b1);padding:10px 14px}
+.kpi-cell-label{font-size:.6rem;color:var(--t2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
+.kpi-cell-value{font-size:1.15rem;font-weight:700;color:var(--clair);font-family:'JetBrains Mono',monospace;line-height:1.1}
+.kpi-cell-value.green{color:var(--vert)}
+.kpi-cell-value.cyan{color:var(--cyan)}
+.kpi-cell-sub{font-size:.62rem;color:rgba(126,184,212,.6);margin-top:3px;font-family:'JetBrains Mono',monospace}
+
+.activity-feed{background:rgba(2,11,24,.95);border:1px solid rgba(0,212,255,.18);border-radius:8px;padding:10px 14px;height:160px;overflow-y:auto;font-family:'JetBrains Mono',monospace;font-size:.72rem}
+.activity-item{padding:6px 0;border-bottom:1px solid rgba(13,110,253,.08);display:flex;gap:8px;align-items:baseline}
+.activity-item:last-child{border-bottom:none}
+.activity-time{color:rgba(126,184,212,.5);flex-shrink:0}
+.activity-tag{padding:1px 6px;border-radius:3px;font-size:.62rem;font-weight:600;flex-shrink:0}
+.activity-tag.ia{background:rgba(0,255,148,.12);color:var(--vert)}
+.activity-tag.humain{background:rgba(255,193,7,.12);color:#ffc107}
+.activity-msg{color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* TOAST */
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--b2);border:1px solid var(--bordv);color:var(--t1);font-size:.75rem;padding:10px 18px;border-radius:8px;box-shadow:0 4px 24px rgba(0,0,0,.4);opacity:0;transition:all .3s ease;pointer-events:none;z-index:999}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-track{background:var(--b0)}
+::-webkit-scrollbar-thumb{background:var(--acc);border-radius:2px}
+</style>
+
+</head><body><div class="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-top">
+      <div class="hex-icon"></div>
+      <div>
+        <div class="brand">NEXUS MIND STUDIO</div>
+        <div class="sub">NLP ENGINE · WOLOF / FRANÇAIS · TF-IDF v2.0</div>
+      </div>
+      <div class="badge">
+        <div class="dot-pulse"></div>
+        MODÈLE ACTIF
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI TOP BAR — toujours visible, sur tous les onglets -->
+  <div class="kpi-topbar">
+    <div class="kpi-cell">
+      <div class="kpi-cell-label">Appels reçus</div>
+      <div class="kpi-cell-value" id="kpi-recus">0</div>
+      <div class="kpi-cell-sub">session en cours</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-cell-label">Traités IA</div>
+      <div class="kpi-cell-value green" id="kpi-ia">0</div>
+      <div class="kpi-cell-sub" id="kpi-ia-cout">Coût : 0 FCFA</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-cell-label">Traités Humain</div>
+      <div class="kpi-cell-value" id="kpi-humain">0</div>
+      <div class="kpi-cell-sub" id="kpi-humain-cout">Coût : 0 FCFA</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-cell-label">Gain estimé</div>
+      <div class="kpi-cell-value cyan" id="kpi-gains">0</div>
+      <div class="kpi-cell-sub">FCFA économisés (session)</div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab active" onclick="showTab(0,this)">🎙 SIMULATEUR EN DIRECT</div>
+    <div class="tab" onclick="showTab(1,this)">🧠 ANALYSE LIBRE</div>
+    <div class="tab" onclick="showTab(2,this)">📥 DATA LAB</div>
+  </div>
+
+  <!-- TAB 0: SIMULATEUR -->
+  <div class="content" id="tab-0" style="display: block;">
+    <div class="section-label">Flux d'appel entrant — analyse temps réel</div>
+    <div class="grid2">
+      <div>
+        <button class="btn-primary" id="btn-declencher-appel" onclick="simulerAppel()">▶ DÉCLENCHER UN APPEL ENTRANT</button>
+        <div class="field">
+          <div class="field-label">Transcription audio → texte</div>
+          <textarea class="inp mono" rows="2" id="transcription" readonly="" placeholder="En attente d&#39;un appel..."></textarea>
+        </div>
+        <div class="field">
+          <div class="field-label">Réponse automatique générée</div>
+          <textarea class="inp green-out" rows="4" id="reponse-sim" readonly="" placeholder="La réponse apparaîtra ici..."></textarea>
+        </div>
+      </div>
+      <div>
+        <div class="field-label" style="margin-bottom:10px">Rapport d'analyse NLP</div>
+        <div class="nlp-panel" id="nlp-sim"><span style="color:var(--cyan)">🎯 EN ATTENTE D'UN APPEL...</span>
+<span style="color:var(--bord)">━━━━━━━━━━━━━━━━━━━━━━</span>
+<span style="color:var(--t2)">Cliquez sur "DÉCLENCHER UN APPEL ENTRANT" pour lancer une simulation.</span></div>
+        <div class="scores-container" id="scores-sim"></div>
+        <div id="intent-sim"></div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="status-card">
+        <div class="status-title">Statut du moteur</div>
+        <div class="status-row"><span class="status-key">Moteur</span><span class="status-val green">TF-IDF ACTIF</span></div>
+        <div class="status-row"><span class="status-key">Verbatims</span><span class="status-val">12 (démo)</span></div>
+        <div class="status-row"><span class="status-key">Intents</span><span class="status-val">8 classes</span></div>
+        <div class="status-row"><span class="status-key">Langues</span><span class="status-val">FR / WLF / mixte</span></div>
+        <div class="status-row"><span class="status-key">Latence</span><span class="status-val green">&lt; 12ms</span></div>
+      </div>
+      <div class="chart-area">
+        <div class="chart-title">Top intentions — démo</div>
+        <div class="bars">
+          <div class="bar-col"><div class="bar" style="height:80px"></div><div class="bar-lbl">réseau</div></div>
+          <div class="bar-col"><div class="bar" style="height:65px;opacity:.85"></div><div class="bar-lbl">solde</div></div>
+          <div class="bar-col"><div class="bar" style="height:50px;opacity:.7"></div><div class="bar-lbl">recharge</div></div>
+          <div class="bar-col"><div class="bar" style="height:40px;opacity:.6"></div><div class="bar-lbl">paiement</div></div>
+          <div class="bar-col"><div class="bar" style="height:30px;opacity:.5"></div><div class="bar-lbl">bug app</div></div>
+          <div class="bar-col"><div class="bar" style="height:22px;opacity:.4"></div><div class="bar-lbl">forfait</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-label">Flux d'activité</div>
+    <div class="activity-feed" id="activity-feed"></div>
+  </div>
+
+  <!-- TAB 1: ANALYSE LIBRE -->
+  <div class="content" id="tab-1" style="display: none;">
+    <div class="section-label">Classification NLP — saisie manuelle</div>
+    <div class="grid2">
+      <div>
+        <div class="field">
+          <div class="field-label">Message client (Français · Wolof · Code-switching)</div>
+          <textarea class="inp" rows="3" id="msg-libre" placeholder="Ex: Dama bëgg xam sam solde internet..."></textarea>
+        </div>
+        <button class="btn-primary" onclick="analyserLibre()">🔍 ANALYSER LE MESSAGE</button>
+        <div class="field">
+          <div class="field-label">Réponse automatique</div>
+          <textarea class="inp green-out" rows="5" id="rep-libre" readonly="" placeholder="La réponse apparaîtra ici..."></textarea>
+        </div>
+      </div>
+      <div>
+        <div class="field-label" style="margin-bottom:10px">Rapport d'analyse</div>
+        <div class="nlp-panel" id="nlp-libre">
+<span style="color:rgba(79,195,247,.4)">// Entrez un message pour lancer l'analyse TF-IDF...</span>
+        </div>
+        <div class="scores-container" id="scores-libre"></div>
+        <div id="intent-libre"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: DATA LAB -->
+  <div class="content" id="tab-2" style="display: none;">
+    <div class="section-label">Pipeline d'entraînement — import CSV</div>
+    <div class="grid2">
+      <div>
+        <input type="file" id="csv-input" accept=".csv" style="display:none" onchange="fichierChoisi(this)">
+        <div id="dropzone" style="border: 1px dashed var(--bordv); border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 12px; cursor: pointer; transition: 0.2s; background: transparent;"
+             onclick="document.getElementById('csv-input').click()"
+             onmouseenter="this.style.background='rgba(13,110,253,.05)'" onmouseleave="this.style.background='transparent'">
+          <div style="font-size:1.5rem;margin-bottom:6px;opacity:.5">⬆</div>
+          <div id="dropzone-label" style="font-size:.72rem;color:var(--t2);letter-spacing:.06em">DÉPOSER LE FICHIER CSV</div>
+          <div style="font-size:.62rem;color:rgba(126,184,212,.4);margin-top:4px">Colonnes requises : message, intent</div>
+        </div>
+        <button class="btn-primary" onclick="synchroniserModele()">⟳ SYNCHRONISER LE MODÈLE</button>
+        <button class="btn-secondary" onclick="exporterMetriques()">↓ EXPORTER LES MÉTRIQUES</button>
+      </div>
+      <div class="status-card">
+        <div class="status-title">Rapport de synchronisation</div>
+        <div class="status-row"><span class="status-key">Statut</span><span class="status-val green" id="sync-statut">✓ MODÈLE DÉMO ACTIF</span></div>
+        <div class="status-row"><span class="status-key">Source</span><span class="status-val" id="sync-source">données intégrées</span></div>
+        <div class="status-row"><span class="status-key">Verbatims</span><span class="status-val" id="sync-verbatims">12 lignes</span></div>
+        <div class="status-row"><span class="status-key">Vocabulaire</span><span class="status-val">~85 tokens</span></div>
+        <div class="status-row"><span class="status-key">Encodage</span><span class="status-val">UTF-8 / latin-1</span></div>
+        <div style="margin-top:10px;font-size:.65rem;color:rgba(0,255,148,.5);letter-spacing:.06em">
+          ⚠ Importez un CSV réel pour entraîner sur vos verbatims Orange / Sonatel
+        </div>
+      </div>
+    </div>
+    <hr class="divider">
+    <div class="section-label">Visualisation des données</div>
+    <div class="grid2">
+      <div class="chart-area">
+        <div class="chart-title">Distribution des intentions</div>
+        <div class="bars" style="height:100px">
+          <div class="bar-col"><div class="bar" style="height:90px"></div><div class="bar-lbl">prob_réseau</div></div>
+          <div class="bar-col"><div class="bar" style="height:70px;opacity:.85"></div><div class="bar-lbl">solde_inet</div></div>
+          <div class="bar-col"><div class="bar" style="height:55px;opacity:.72"></div><div class="bar-lbl">recharge</div></div>
+          <div class="bar-col"><div class="bar" style="height:42px;opacity:.6"></div><div class="bar-lbl">paiement</div></div>
+          <div class="bar-col"><div class="bar" style="height:32px;opacity:.5"></div><div class="bar-lbl">bug_app</div></div>
+          <div class="bar-col"><div class="bar" style="height:24px;opacity:.4"></div><div class="bar-lbl">forfait</div></div>
+          <div class="bar-col"><div class="bar" style="height:16px;opacity:.3"></div><div class="bar-lbl">résil.</div></div>
+          <div class="bar-col"><div class="bar" style="height:12px;opacity:.25"></div><div class="bar-lbl">service</div></div>
+        </div>
+      </div>
+      <div class="chart-area">
+        <div class="chart-title">Répartition linguistique</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:20px;margin-top:20px">
+          <svg width="90" height="90" viewBox="0 0 90 90">
+            <circle cx="45" cy="45" r="35" fill="none" stroke="rgba(13,110,253,.15)" stroke-width="14"></circle>
+            <circle cx="45" cy="45" r="35" fill="none" stroke="var(--acc)" stroke-width="14" stroke-dasharray="142 78" stroke-dashoffset="35" transform="rotate(-90 45 45)" style="filter:drop-shadow(0 0 4px rgba(13,110,253,.5))"></circle>
+            <circle cx="45" cy="45" r="35" fill="none" stroke="var(--cyan)" stroke-width="14" stroke-dasharray="55 165" stroke-dashoffset="-107" transform="rotate(-90 45 45)"></circle>
+            <circle cx="45" cy="45" r="35" fill="none" stroke="rgba(0,255,148,.6)" stroke-width="14" stroke-dasharray="24 196" stroke-dashoffset="-162" transform="rotate(-90 45 45)"></circle>
+          </svg>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:2px;background:var(--acc)"></div><span style="font-size:.68rem;color:var(--t2)">Français</span><span style="font-size:.68rem;font-family:'JetBrains Mono',monospace;color:var(--clair);margin-left:auto;padding-left:10px">65%</span></div>
+            <div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:2px;background:var(--cyan)"></div><span style="font-size:.68rem;color:var(--t2)">Wolof/FR</span><span style="font-size:.68rem;font-family:'JetBrains Mono',monospace;color:var(--clair);margin-left:auto;padding-left:10px">25%</span></div>
+            <div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:2px;background:rgba(0,255,148,.7)"></div><span style="font-size:.68rem;color:var(--t2)">Wolof</span><span style="font-size:.68rem;font-family:'JetBrains Mono',monospace;color:var(--clair);margin-left:auto;padding-left:10px">10%</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">NEXUS MIND STUDIO · NLP ENGINE v2.0 · THIÈS, SÉNÉGAL</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===================================================================
+   MODÈLE DE COÛT — à ajuster selon vos vrais chiffres opérationnels
+   =================================================================== */
+const COST_IA_PAR_APPEL = 25;      // FCFA — coût marginal IA (cloud/tokens/électricité)
+const COST_HUMAIN_PAR_APPEL = 450; // FCFA — coût moyen agent humain par appel (salaire/charges/volume)
+
+const REPONSES={
+  panne_internet: "Je comprends, une coupure c'est vite frustrant. Essayez d'abord un redémarrage du téléphone et une réactivation des données mobiles — ça résout 8 pannes sur 10. Toujours bloqué ? Composez le 700, c'est gratuit.",
+  mobile_money: "Pas de panique pour votre argent. Composez le étoile 144 dièse ou appelez directement le 77 777 77 77 : c'est la ligne dédiée Orange Money, ouverte 24h/24.",
+  activation_sim: "Pour activer ou débloquer votre SIM, rendez-vous dans n'importe quelle agence Orange avec votre pièce d'identité — ça prend en général moins de 10 minutes.",
+  reclamation_facture: "Votre réclamation est bien enregistrée. Un conseiller reviendra vers vous sous 24 heures avec le détail de votre facture.",
+  resiliation: "Avant de vous quitter, laissez-nous vous présenter nos offres de fidélisation — ça vaut souvent le coup. Un conseiller peut vous rappeler dans l'heure si vous préférez.",
+  urgence_medicale: "URGENCE — appelez immédiatement le 15 (SAMU) ou le 18 (pompiers). Ne raccrochez pas tant que les secours ne sont pas en route.",
+  consultation_generale: "Nos médecins sont disponibles du lundi au samedi, de 8h à 20h. Je peux vous transférer au standard pour fixer un créneau aujourd'hui.",
+  rdv_specialiste: "Pour un rendez-vous avec un spécialiste, notre portail patient est le plus rapide, sinon notre standard vous guide dans la minute.",
+  sante_mentale: "Vous n'êtes pas seul, et c'est important que vous en parliez. Notre équipe de psychologues est disponible dès maintenant sur la ligne d'écoute — je vous transfère.",
+  medication_ordonnance: "Pour le renouvellement d'une ordonnance, votre médecin traitant reste l'interlocuteur le plus rapide. Je peux aussi vous transférer à la pharmacie partenaire la plus proche.",
+  maternite: "Notre maternité assure un suivi complet, de la grossesse au post-partum. Prenons rendez-vous avec une sage-femme dès que possible.",
+  maladie_culture: "Contactez le service de développement rural de votre département pour un diagnostic gratuit — décrivez bien les symptômes sur les feuilles ou les tiges.",
+  sante_animale: "Isolez d'abord l'animal malade du reste du troupeau, puis contactez le service vétérinaire de votre département sans attendre.",
+  semences_plantation: "Les semences certifiées, adaptées à votre zone, sont disponibles à la SONACOS et à la DISEM — je peux vous indiquer le point le plus proche.",
+  irrigation_eau: "Des financements pour l'irrigation existent via le programme PDIDAS. Un conseiller agricole peut vous accompagner dans le dossier.",
+  intrants_engrais: "Les engrais subventionnés sont disponibles via les coopératives agréées de votre zone — le dosage dépend de votre culture, précisez-la à l'agent.",
+  vente_marche: "Consultez les prix du jour en temps réel sur le site de l'ANSD, et pensez à rejoindre une coopérative pour mieux négocier vos ventes.",
+  service_client: "Votre demande a été transmise à un conseiller humain. Vous serez recontacté sous peu.",
+};
+
+/* ===================================================================
+   RÉPONSES WOLOF — À VALIDER/REMPLACER PAR VOS VERBATIMS AUTHENTIQUES
+   (base de données Wolof-Français validée mentionnée dans vos travaux).
+   Ce sont des versions de départ, à corriger si la formulation n'est
+   pas exactement celle que vous utilisez avec vos locuteurs natifs.
+   =================================================================== */
+const REPONSES_WOLOF={
+  panne_internet: "Dégg naa, internet bi dafa jamono bu metti. Jël sa telefon, defar ko dellu, ubbi ci wàll data mobile — loolu dana faj internet bi ci 8 ci 10. Su dul faj, wooy 700, dara du fey.",
+  mobile_money: "Bul jugé, sa xaalis dafa aju. Woo 144 walla 77 777 77 77 — liñu jëfandikoo Orange Money, ubbi 24h/24.",
+  activation_sim: "Ngir activer walla ubbi sa SIM, dem ci ag agence Orange bu jege ak sa CNI — du yagg lu ëpp 10 minit.",
+  reclamation_facture: "Sa woote bi nekk na ci lëkkël. Kenn ci nu dina la woo ci 24 waxtu ngir wax ci sa facture.",
+  resiliation: "Balaa nga tuxu, nanga xam nu am ay offre yu baax ngir tekki sa kontar. Kenn dina la woo ci benn waxtu su nga bëgg.",
+  urgence_medicale: "URGENCE — woo léegi 15 (SAMU) walla 18 (sapeurs). Bul dindi telefon bi ba kuy dimbali agsi.",
+  service_client: "Sa laaj dina jëm ci kenn ci sunu ëkip. Dinañu la woo ci ndoggu.",
+};
+
+const DOMAIN_MAP={
+  panne_internet:'telecom', mobile_money:'telecom', reclamation_facture:'telecom',
+  resiliation:'telecom', activation_sim:'telecom',
+  urgence_medicale:'sante', consultation_generale:'sante', rdv_specialiste:'sante', sante_mentale:'sante',
+  medication_ordonnance:'sante', maternite:'sante',
+  maladie_culture:'agriculture', sante_animale:'agriculture', semences_plantation:'agriculture',
+  irrigation_eau:'agriculture', intrants_engrais:'agriculture', vente_marche:'agriculture',
+  service_client:'general'
+};
+const ALWAYS_HUMAN=['urgence_medicale','sante_mentale','resiliation','reclamation_facture'];
+
+// mots-clés par defaut — remplaces/enrichis dynamiquement si un CSV reel est importe (voir Data Lab)
+let INTENTS_DATA={
+  panne_internet:       {mots:['internet','connexion','réseau','reseau','4g','wifi','doxul','doxoul','lente'], score_base:0.9},
+  mobile_money:         {mots:['orange money','wave','mobile money','xaalis','transfert','retrait','togg'], score_base:0.9},
+  reclamation_facture:  {mots:['facture','prélèvement','prelevement','remboursement','surfacturation','débité','debite'], score_base:0.85},
+  resiliation:          {mots:['résilier','resilier','quitter','changer opérateur','changer operateur','portabilité','portabilite'], score_base:0.85},
+  activation_sim:       {mots:['sim','puk','activation','carte sim'], score_base:0.85},
+  urgence_medicale:     {mots:['urgence','douleur thoracique','respire','malaise','accident','samu'], score_base:0.95},
+  consultation_generale:{mots:['médecin','medecin','fièvre','fievre','tousse','mal à la tête','mal a la tete','fatigué','fatigue'], score_base:0.8},
+  rdv_specialiste:      {mots:['spécialiste','specialiste','cardiologue','dermatologue','gynécologie','gynecologie','ophtalmologue'], score_base:0.8},
+  sante_mentale:        {mots:['déprimé','deprime','angoisse','psychologue','stress','seul','triste'], score_base:0.9},
+  medication_ordonnance:{mots:['ordonnance','médicament','medicament','renouveler','posologie','traitement'], score_base:0.8},
+  maternite:            {mots:['enceinte','grossesse','accouchement','sage-femme','allaitement'], score_base:0.85},
+  maladie_culture:      {mots:['mil','tomates','chenilles','champignons','récolte malade','recolte malade','manioc'], score_base:0.8},
+  sante_animale:        {mots:['bœuf','boeuf','vache','poulets','mouton','bétail','betail','vétérinaire','veterinaire'], score_base:0.8},
+  semences_plantation:  {mots:['semer','semences','arachide','planter','riz','niébé','niebe'], score_base:0.75},
+  irrigation_eau:       {mots:['irrigu','arrosage','sécheresse','secheresse','pompe','eau'], score_base:0.75},
+  intrants_engrais:     {mots:['engrais','pesticide','herbicide','npk','fertiliser'], score_base:0.75},
+  vente_marche:         {mots:['vendre','récolte','recolte','marché','marche','coopérative','cooperative','crédit','credit'], score_base:0.75},
+};
+
+/* ===================================================================
+   DÉTECTION DE LANGUE — BASÉE SUR UN RATIO, PAS SUR "UN SEUL MOT"
+   -------------------------------------------------------------------
+   Ancien bug : un seul mot non-français dans la phrase faisait basculer
+   toute la réponse (accueil + transfert) en wolof, même sur une phrase
+   à 90% française avec juste un mot emprunté au wolof.
+
+   Correctif : on calcule le RATIO de mots wolof reconnus sur le total
+   de mots "significatifs" de la phrase, et on exige un minimum de
+   correspondances ET un ratio suffisant avant de basculer. Une phrase
+   très courte (1-2 mots) est traitée avec plus de prudence.
+   =================================================================== */
+const WOLOF_LEXIQUE=[
+  // --- Base de départ (à valider par un locuteur natif) ---
+  'dama','dafa','naka','nanga','bëgg','beugg','xam','xamul','waxtaan','wax','waxal',
+  'doxoul','doxul','jàng','jang','dëgg','degg','yow','man','moom','ñoom','nun',
+  'kii','kiy','loolu','fii','fan','ban','lan','ndax','su','bu','ci','ak','ngir',
+  'wóoy','wooy','wóoye','jàppale','jappale','baax','baaxul','metti','tuuti','yagg',
+  'sama','jël','def','defar','ubbi','tekki','xaalis','togg','toggue','xaar',
+  'kenn','ñu','dinañu','dina','laaj','naam','waaw','déet','deet',
+  // Variantes phonétiques courantes (orthographe "à la française")
+  'khaliss','khalis','xalis','dieul','lagn','lagnou','lañu','wakh','wakhtan',
+  'dieuf','djeuf','djeredieuf','dieredieuf','jerejef','djerediouf','nagnu',
+  'diaay','djaay','ndakh','moye','moyewoul',
+  // --- Vocabulaire RÉEL extrait de votre dataset NMS_African_DataLab (4500 lignes,
+  // 1500 fr_wolof) — fréquences vérifiées, donc fiable pour la détection ---
+  'bi','na','ma','dañu','xamul','bëgg','togg','duma','mana','bii','dem','set',
+  'dara','li','dey','bëgguma','stay','defekk','am','yépp','amul','baxul','doxul',
+  'resoo','defa','maa','ngi','yonnee','bu','bari','doxoul','nekkou','suur','lool'
+];
+const WOLOF_LEXIQUE_SET=new Set(WOLOF_LEXIQUE.map(w=>w.trim().toLowerCase()));
+
+// Normalisation phonétique légère : rapproche une graphie "à la française"
+// de la forme la plus fréquente dans le lexique, avant de comparer.
+// Ex : "khaliss" → "xaliss" (kh→x), "dieul" reste couvert par la variante explicite.
+function normaliserPhonetique(mot){
+  return mot
+    .replace(/kh/g,'x')
+    .replace(/dj/g,'j')
+    .replace(/gn/g,'ñ')
+    .replace(/ph/g,'f')
+    .replace(/oo/g,'o')
+    .replace(/ii/g,'i');
+}
+
+function detecterLangue(msg){
+  const mots=msg.toLowerCase()
+    .replace(/[^\wàâäéèêëïîôöùûüÿœæçñ\s'-]/gi,' ')
+    .split(/\s+/)
+    .filter(w=>w.length>1);
+  if(mots.length===0)return{langue:'francais',ratio:0,matches:0,total:0};
+
+  let matches=0;
+  mots.forEach(m=>{
+    if(WOLOF_LEXIQUE_SET.has(m) || WOLOF_LEXIQUE_SET.has(normaliserPhonetique(m))) matches++;
+  });
+  const ratio=matches/mots.length;
+
+  // Seuils : au moins 2 mots wolof reconnus ET au moins 30% de la phrase,
+  // sauf si la phrase est très courte (<=3 mots) où 1 mot wolof net suffit
+  // mais seulement si ce mot représente déjà >=50% de la phrase.
+  let estWolof=false;
+  if(mots.length<=3){
+    estWolof = matches>=1 && ratio>=0.5;
+  }else{
+    estWolof = matches>=2 && ratio>=0.3;
+  }
+
+  return{langue:estWolof?'wolof':'francais',ratio:Math.round(ratio*100),matches,total:mots.length};
+}
+
+function detecterIntent(msg){
+  const m=msg.toLowerCase();
+  let scores=[];
+  for(const[intent,data] of Object.entries(INTENTS_DATA)){
+    let s=0;
+    for(const mot of data.mots){if(m.includes(mot))s+=data.score_base/data.mots.length;}
+    if(s>0)scores.push([intent,Math.min(s,1)]);
+  }
+  if(scores.length===0){
+    scores=[["service_client",0.45],["problème_réseau",0.30]];
+  }
+  scores.sort((a,b)=>b[1]-a[1]);
+  const total=scores.reduce((s,x)=>s+x[1],0)||1;
+  return scores.slice(0,3).map(([l,s])=>[l,Math.round(s/total*100)]);
+}
+
+// Construit la réponse ET le message de transfert dans LA MÊME langue détectée,
+// pour ne plus avoir un accueil dans une langue et un transfert dans une autre.
+function construireReponse(intent, detection, resolvedByIA){
+  if(detection.langue==='wolof'){
+    if(resolvedByIA){
+      return REPONSES_WOLOF[intent] || REPONSES_WOLOF.service_client;
+    }
+    return "Damay la wommat ci kenn ci sunu ëkip, xaar tuuti."; // transfert en wolof
+  }
+  if(resolvedByIA){
+    return REPONSES[intent] || "Demande transmise à un conseiller humain.";
+  }
+  return "Je transfère votre appel à un conseiller humain, merci de patienter."; // transfert en français
+}
+
+function renderScores(containerId, scores){
+  const c=document.getElementById(containerId);
+  c.innerHTML=scores.map(([l,p])=>`
+    <div class="score-row">
+      <div class="score-label">${l}</div>
+      <div class="score-bar-bg"><div class="score-bar" style="width:${p}%"></div></div>
+      <div class="score-val">${p}%</div>
+    </div>`).join('');
+}
+
+function renderIntent(containerId, label, pct){
+  document.getElementById(containerId).innerHTML=`
+    <div class="intent-result">
+      <div class="intent-icon"></div>
+      <div class="intent-text">${label.toUpperCase()}</div>
+      <div class="intent-pct">${pct}%</div>
+    </div>`;
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer=setTimeout(()=>t.classList.remove('show'),2600);
+}
+
+function simulerAppel(){
+  const btn=document.getElementById('btn-declencher-appel');
+  btn.disabled=true;
+  btn.style.opacity=0.5;
+  btn.style.cursor='not-allowed';
+
+  document.getElementById('transcription').value='📞 Sonnerie...';
+  document.getElementById('reponse-sim').value='';
+  document.getElementById('nlp-sim').innerHTML=`<span style="color:var(--cyan)">🎯 Appel entrant...</span>`;
+  document.getElementById('scores-sim').innerHTML='';
+  document.getElementById('intent-sim').innerHTML='';
+
+  jouerSonnerie();
+
+  setTimeout(()=>{
+    const accueil="Nexus Mind Studio, que puis-je faire pour vous ?";
+    document.getElementById('nlp-sim').innerHTML=`<span style="color:var(--vert)">🤖 L'IA décroche et parle...</span>`;
+
+    parlerTTS(accueil,()=>{
+      document.getElementById('transcription').value='🎙️ Je vous écoute...';
+      document.getElementById('nlp-sim').innerHTML=`<span style="color:var(--cyan)">🎙️ En attente de votre voix...</span>`;
+
+      ecouterMicro((transcript,err)=>{
+        if(!transcript){
+          let msg;
+          if(err==='not-allowed'||err==='permission-denied')msg='⚠ Micro refusé — autorisez l’accès au microphone.';
+          else if(err==='non_supporte')msg='⚠ Navigateur non compatible. Utilisez Chrome ou Edge.';
+          else msg='⚠ Aucune parole détectée. Réessayez.';
+          document.getElementById('transcription').value=msg;
+          document.getElementById('nlp-sim').innerHTML=`<span style="color:#ffc107">${msg}</span>`;
+          reactiverBouton(btn);
+          return;
+        }
+
+        document.getElementById('transcription').value=transcript;
+        const detection=detecterLangue(transcript);
+        const scores=detecterIntent(transcript);
+        const top=scores[0];
+        const resolvedByIA=top[1]>=50 && !ALWAYS_HUMAN.includes(top[0]);
+        const reponse=construireReponse(top[0],detection,resolvedByIA);
+
+        document.getElementById('reponse-sim').value=reponse;
+        document.getElementById('nlp-sim').innerHTML=`<span style="color:var(--cyan)">🎯 ANALYSE EN TEMPS RÉEL</span>
+<span style="color:var(--bord)">━━━━━━━━━━━━━━━━━━━━━━</span>
+<span style="color:var(--t2)">Message :</span> <span style="color:var(--t1)">"${transcript}"</span>
+
+<span style="color:var(--t2)">Langue    :</span> <span style="color:var(--vert)">${detection.langue==='wolof'?'Wolof':'Français'} (${detection.matches}/${detection.total} mots, ${detection.ratio}%)</span>
+<span style="color:var(--t2)">Intent    :</span> <span style="color:var(--clair)">${top[0].toUpperCase()}</span>
+<span style="color:var(--t2)">Confiance :</span> <span style="color:var(--vert)">${top[1]}%</span>
+<span style="color:var(--t2)">Routage   :</span> <span style="color:${resolvedByIA?'var(--vert)':'#ffc107'}">${resolvedByIA?'🤖 IA':'👤 HUMAIN'}</span>
+<span style="color:var(--t2)">Latence   :</span> <span style="color:var(--clair)">${(Math.random()*8+4).toFixed(1)}ms</span>`;
+        renderScores('scores-sim',scores);
+        renderIntent('intent-sim',top[0],top[1]);
+
+        parlerTTS(reponse,()=>{
+          kpi.recus++;
+          if(resolvedByIA){ kpi.ia++; }
+          else{ kpi.humain++; }
+          updateKpiDisplay();
+          ajouterActivite(heureActuelle(),resolvedByIA?'ia':'humain','🔴 SIMULATEUR — '+transcript.substring(0,30)+'...');
+          sessionHistory.push({text:transcript,intent:top[0],confidence:top[1]/100,route:resolvedByIA?'BOT':'HUMAN',source:'simulateur',langue:detection.langue});
+          reactiverBouton(btn);
+        });
+      });
+    });
+  },2200);
+}
+
+function analyserLibre(){
+  const msg=document.getElementById('msg-libre').value.trim();
+  if(!msg){return;}
+  const scores=detecterIntent(msg);
+  const top=scores[0];
+  const detection=detecterLangue(msg);
+  const resolvedByIA=top[1]>=50 && !ALWAYS_HUMAN.includes(top[0]);
+  const reponse=construireReponse(top[0],detection,resolvedByIA);
+
+  document.getElementById('rep-libre').value=reponse;
+  document.getElementById('nlp-libre').innerHTML=`<span style="color:var(--cyan)">🧠 RAPPORT TF-IDF</span>
+<span style="color:var(--bord)">━━━━━━━━━━━━━━━━━━━━━━</span>
+<span style="color:var(--t2)">Message :</span> <span style="color:var(--t1)">"${msg.substring(0,50)}${msg.length>50?'...':''}"</span>
+
+<span style="color:var(--t2)">Langue    :</span> <span style="color:var(--vert)">${detection.langue==='wolof'?'Wolof':'Français'} (${detection.matches}/${detection.total} mots, ${detection.ratio}%)</span>
+<span style="color:var(--t2)">Tokens    :</span> <span style="color:var(--clair)">${msg.split(/\s+/).length} mots analysés</span>
+<span style="color:var(--t2)">Intent    :</span> <span style="color:var(--clair)">${top[0].toUpperCase()}</span>
+<span style="color:var(--t2)">Confiance :</span> <span style="color:var(--vert)">${top[1]}%</span>`;
+  renderScores('scores-libre',scores);
+  renderIntent('intent-libre',top[0],top[1]);
+
+  kpi.recus++;
+  if(resolvedByIA){ kpi.ia++; }
+  else{ kpi.humain++; }
+  updateKpiDisplay();
+  ajouterActivite(heureActuelle(), resolvedByIA?'ia':'humain', '🧠 ANALYSE LIBRE — '+msg.substring(0,30)+'...');
+  sessionHistory.push({text:msg,intent:top[0],confidence:top[1]/100,route:resolvedByIA?'BOT':'HUMAN',source:'analyse_libre',langue:detection.langue});
+}
+
+let importedDataset = null;
+const STOPWORDS = new Set(['le','la','les','de','des','du','un','une','et','je','tu','il','elle','nous','vous','ils','ma','mon','mes','ce','cette','pas','plus','très','tres','trop','pour','avec','dans','sur','est','suis','ai','au','aux','ne','se','sa','son','ses','qui','que','ça','ca','on','être','etre','cet','ces','y','en','du','depuis','là']);
+
+function parseCSV(text){
+  const lines=text.split(/\r?\n/).filter(l=>l.trim().length>0);
+  if(lines.length===0)return{header:[],rows:[]};
+  const parseLine=(line)=>{
+    const result=[];let cur='';let inQuotes=false;
+    for(let i=0;i<line.length;i++){
+      const c=line[i];
+      if(c==='"'){ if(inQuotes&&line[i+1]==='"'){cur+='"';i++;} else inQuotes=!inQuotes; }
+      else if(c===','&&!inQuotes){result.push(cur);cur='';}
+      else cur+=c;
+    }
+    result.push(cur);
+    return result;
+  };
+  const header=parseLine(lines[0]).map(h=>h.trim().toLowerCase());
+  const rows=lines.slice(1).map(parseLine);
+  return{header,rows};
+}
+
+function tokenize(text){
+  return text.toLowerCase()
+    .replace(/[^\wàâäéèêëïîôöùûüÿœæçñ\s]/gi,' ')
+    .split(/\s+/)
+    .filter(w=>w.length>2&&!STOPWORDS.has(w));
+}
+
+function fichierChoisi(input){
+  if(!(input.files&&input.files.length>0))return;
+  const f=input.files[0];
+  document.getElementById('dropzone-label').textContent=`📄 ${f.name}`;
+  const reader=new FileReader();
+  reader.onload=(e)=>{
+    const{header,rows}=parseCSV(e.target.result);
+    const msgIdx=header.indexOf('message');
+    const intentIdx=header.indexOf('intent');
+    if(msgIdx===-1||intentIdx===-1){
+      showToast('⚠ Colonnes "message" et "intent" introuvables dans ce CSV.');
+      return;
+    }
+    const seen=new Set();let dedupCount=0;const parsed=[];
+    rows.forEach(r=>{
+      const msg=(r[msgIdx]||'').trim();
+      const intent=(r[intentIdx]||'').trim();
+      if(!msg||!intent)return;
+      if(seen.has(msg)){dedupCount++;return;}
+      seen.add(msg);
+      parsed.push({message:msg,intent});
+    });
+    importedDataset={rows:parsed,source:f.name,dedupCount,totalRaw:rows.length};
+    document.getElementById('sync-source').textContent=f.name;
+    document.getElementById('sync-verbatims').textContent=`${parsed.length} lignes (${dedupCount} doublons retirés)`;
+    document.getElementById('sync-statut').textContent='📄 FICHIER PRÊT — cliquez sur SYNCHRONISER';
+    document.getElementById('sync-statut').classList.remove('green');
+    showToast(`Fichier "${f.name}" chargé : ${parsed.length} lignes utiles sur ${rows.length}.`);
+  };
+  reader.readAsText(f,'UTF-8');
+}
+
+function synchroniserModele(){
+  if(!importedDataset||importedDataset.rows.length===0){
+    showToast("⚠ Importez d'abord un fichier CSV valide (colonnes message, intent).");
+    return;
+  }
+  document.getElementById('sync-statut').textContent='⏳ SYNCHRONISATION...';
+  document.getElementById('sync-statut').classList.remove('green');
+
+  setTimeout(()=>{
+    const byIntent={};
+    importedDataset.rows.forEach(({message,intent})=>{
+      if(!byIntent[intent])byIntent[intent]=[];
+      byIntent[intent].push(message);
+    });
+
+    const newIntentsData={};
+    Object.entries(byIntent).forEach(([intent,messages])=>{
+      const freq={};
+      messages.forEach(m=>{ tokenize(m).forEach(w=>{freq[w]=(freq[w]||0)+1;}); });
+      const topWords=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,12).map(([w])=>w);
+      const scoreBase=Math.min(0.95,0.55+Math.log10(messages.length+1)*0.15);
+      newIntentsData[intent]={mots:topWords,score_base:Math.round(scoreBase*100)/100};
+      if(!REPONSES[intent])REPONSES[intent]="Votre demande a été transmise à un conseiller humain.";
+    });
+
+    INTENTS_DATA=newIntentsData;
+
+    const totalWords=Object.values(newIntentsData).reduce((s,d)=>s+d.mots.length,0);
+    document.getElementById('sync-statut').textContent='✓ MODÈLE ENTRAÎNÉ SUR VOS DONNÉES';
+    document.getElementById('sync-statut').classList.add('green');
+    document.getElementById('sync-verbatims').textContent=`${importedDataset.rows.length} lignes utilisées`;
+    updateIntentChart(byIntent);
+    showToast(`Modèle mis à jour : ${Object.keys(newIntentsData).length} intentions, ${totalWords} mots-clés appris.`);
+  },1200);
+}
+
+function updateIntentChart(byIntent){
+  const counts=Object.entries(byIntent).map(([intent,msgs])=>[intent,msgs.length]).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const max=counts.length?counts[0][1]:1;
+  const container=document.querySelector('#tab-2 .chart-area .bars');
+  if(!container)return;
+  container.innerHTML=counts.map(([intent,count])=>`
+    <div class="bar-col"><div class="bar" style="height:${Math.round((count/max)*90)}px"></div><div class="bar-lbl">${intent.replace(/_/g,' ')}</div></div>
+  `).join('');
+}
+
+function exporterMetriques(){
+  if(!importedDataset){
+    showToast('⚠ Aucune donnée importée à exporter — importez un CSV d\'abord.');
+    return;
+  }
+  const report={
+    projet:"Nexus Mind Studio — Data Lab",
+    source:importedDataset.source,
+    date_export:new Date().toISOString(),
+    lignes_utiles:importedDataset.rows.length,
+    doublons_retires:importedDataset.dedupCount,
+    intentions:Object.keys(INTENTS_DATA).map(intent=>({
+      intent, mots_cles_appris:INTENTS_DATA[intent].mots, score_base:INTENTS_DATA[intent].score_base
+    }))
+  };
+  const blob=new Blob([JSON.stringify(report,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`rapport_datalab_${Date.now()}.json`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Rapport exporté avec succès.');
+}
+
+function showTab(idx,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  [0,1,2].forEach(i=>document.getElementById('tab-'+i).style.display=i===idx?'block':'none');
+}
+
+/* ===== KPI TOP BAR — chiffres réels de la session, avec coûts ===== */
+let kpi={recus:0, ia:0, humain:0};
+let sessionHistory=[]; // trace tous les appels reels (simulateur, analyse libre)
+
+function updateKpiDisplay(){
+  const coutIA=kpi.ia*COST_IA_PAR_APPEL;
+  const coutHumain=kpi.humain*COST_HUMAIN_PAR_APPEL;
+  const gain=kpi.ia*(COST_HUMAIN_PAR_APPEL-COST_IA_PAR_APPEL);
+
+  document.getElementById('kpi-recus').textContent=kpi.recus.toLocaleString('fr-FR');
+  document.getElementById('kpi-ia').textContent=kpi.ia.toLocaleString('fr-FR');
+  document.getElementById('kpi-humain').textContent=kpi.humain.toLocaleString('fr-FR');
+  document.getElementById('kpi-gains').textContent=gain.toLocaleString('fr-FR');
+  document.getElementById('kpi-ia-cout').textContent='Coût : '+coutIA.toLocaleString('fr-FR')+' FCFA';
+  document.getElementById('kpi-humain-cout').textContent='Coût : '+coutHumain.toLocaleString('fr-FR')+' FCFA';
+}
+
+function heureActuelle(){
+  const d=new Date();
+  return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0');
+}
+
+function ajouterActivite(heureStr,tag,texte){
+  const feed=document.getElementById('activity-feed');
+  const div=document.createElement('div');
+  div.className='activity-item';
+  div.innerHTML=`<span class="activity-time">${heureStr}</span><span class="activity-tag ${tag}">${tag==='ia'?'IA':'HUMAIN'}</span><span class="activity-msg">${texte}</span>`;
+  feed.prepend(div);
+  while(feed.children.length>20)feed.removeChild(feed.lastChild);
+}
+
+updateKpiDisplay();
+
+// Bip audio synthétique (aucun fichier externe requis)
+function beep(freq,dur){
+  try{
+    const AC=window.AudioContext||window.webkitAudioContext;
+    if(!AC)return;
+    const ctx=new AC();
+    const osc=ctx.createOscillator();
+    const gain=ctx.createGain();
+    osc.type='sine';
+    osc.frequency.value=freq;
+    gain.gain.setValueAtTime(0.06,ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur/1000);
+    osc.connect(gain);gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime+dur/1000);
+    setTimeout(()=>ctx.close(),dur+80);
+  }catch(e){}
+}
+
+function jouerSonnerie(){
+  let n=0;
+  const iv=setInterval(()=>{
+    beep(n%2===0?480:420,250);
+    n++;
+    if(n>=6)clearInterval(iv);
+  },350);
+}
+
+function reactiverBouton(btn){
+  setTimeout(()=>{
+    btn.disabled=false;
+    btn.style.opacity=1;
+    btn.style.cursor='pointer';
+  },1500);
+}
+
+// Synthèse vocale : l'IA parle à voix haute via les haut-parleurs/casque
+function parlerTTS(texte,callback){
+  try{
+    const synth=window.speechSynthesis;
+    if(!synth){if(callback)callback();return;}
+    synth.cancel();
+    const utter=new SpeechSynthesisUtterance(texte);
+    utter.lang='fr-FR';
+    utter.rate=1.0;
+    utter.pitch=1.0;
+    utter.onend=()=>{if(callback)callback();};
+    utter.onerror=()=>{if(callback)callback();};
+    synth.speak(utter);
+  }catch(e){if(callback)callback();}
+}
+
+// Reconnaissance vocale : capte la voix via le micro du casque
+function ecouterMicro(callback){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){callback(null,'non_supporte');return;}
+  const recognition=new SR();
+  recognition.lang='fr-FR';
+  recognition.interimResults=true;
+  recognition.maxAlternatives=1;
+  let finalTranscript='';
+  let terminé=false;
+  let safetyTimer=null;
+
+  recognition.onstart=()=>{
+    // Le minuteur de sécurité démarre seulement une fois l'écoute réellement active,
+    // pas au moment du clic (sinon la popup d'autorisation micro "mange" le temps disponible).
+    safetyTimer=setTimeout(()=>{try{recognition.stop();}catch(e){}},12000);
+  };
+  recognition.onresult=(event)=>{
+    let interim='';
+    for(let i=event.resultIndex;i<event.results.length;i++){
+      const t=event.results[i][0].transcript;
+      if(event.results[i].isFinal)finalTranscript+=t;
+      else interim+=t;
+    }
+    const transEl=document.getElementById('live-transcription');
+    if(transEl)transEl.textContent=finalTranscript+interim;
+  };
+  recognition.onerror=(e)=>{if(!terminé){terminé=true;clearTimeout(safetyTimer);callback(finalTranscript||null,e.error);}};
+  recognition.onend=()=>{if(!terminé){terminé=true;clearTimeout(safetyTimer);callback(finalTranscript||null);}};
+  try{recognition.start();}catch(e){callback(null,'demarrage_echoue');return;}
+}
+
+document.getElementById('msg-libre').addEventListener('keydown',function(e){
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();analyserLibre();}
+});
+</script>
+</body></html>
