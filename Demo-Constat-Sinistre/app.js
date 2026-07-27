@@ -115,19 +115,64 @@ document.getElementById('btn-reprendre-photo').addEventListener('click', ()=>inp
 inputPhoto.addEventListener('change', (e)=>{
   const file = e.target.files[0];
   if(!file) return;
-  const reader = new FileReader();
-  reader.onload = (ev)=>{
-    dossier.photoDataUrl = ev.target.result;
-    document.getElementById('photo-vide').style.display = 'none';
-    const img = document.getElementById('photo-apercu');
-    img.src = dossier.photoDataUrl;
-    img.style.display = 'block';
-    document.getElementById('btn-ouvrir-camera').style.display = 'none';
-    document.getElementById('btn-reprendre-photo').style.display = 'block';
-    showToast('✓ Photo enregistrée.');
+
+  // Feedback immédiat : sur certains téléphones, une photo caméra fait
+  // 10 à 50 Mo — le traitement peut prendre 1-2 secondes, il faut le montrer.
+  document.getElementById('photo-vide').style.display = 'flex';
+  document.getElementById('photo-vide').innerHTML = `
+    <div class="gros-icone">⏳</div>
+    <div class="capture-label">Traitement de la photo...</div>`;
+  document.getElementById('photo-apercu').style.display = 'none';
+
+  const imgTemp = new Image();
+  const urlTemp = URL.createObjectURL(file);
+
+  imgTemp.onload = ()=>{
+    try{
+      // Compression : on redimensionne à 1280px de large max et on repasse
+      // en JPEG qualité 0.8 — évite les plantages mémoire sur les photos
+      // très lourdes des téléphones récents, et accélère le traitement.
+      const MAX_LARGEUR = 1280;
+      let {width, height} = imgTemp;
+      if(width > MAX_LARGEUR){
+        height = Math.round(height * (MAX_LARGEUR/width));
+        width = MAX_LARGEUR;
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(imgTemp, 0, 0, width, height);
+      dossier.photoDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+      URL.revokeObjectURL(urlTemp);
+
+      document.getElementById('photo-vide').style.display = 'none';
+      const img = document.getElementById('photo-apercu');
+      img.src = dossier.photoDataUrl;
+      img.style.display = 'block';
+      document.getElementById('btn-ouvrir-camera').style.display = 'none';
+      document.getElementById('btn-reprendre-photo').style.display = 'block';
+      showToast('✓ Photo enregistrée.');
+    }catch(err){
+      URL.revokeObjectURL(urlTemp);
+      afficherErreurPhoto();
+    }
   };
-  reader.readAsDataURL(file);
+
+  imgTemp.onerror = ()=>{
+    URL.revokeObjectURL(urlTemp);
+    afficherErreurPhoto();
+  };
+
+  imgTemp.src = urlTemp;
 });
+
+function afficherErreurPhoto(){
+  document.getElementById('photo-vide').innerHTML = `
+    <div class="gros-icone">📷</div>
+    <div class="capture-label">Prendre une photo</div>`;
+  showToast('⚠ La photo n\'a pas pu être chargée. Réessayez, ou reprenez une photo plus simple.');
+}
 
 /* ---------- ÉTAPE 3 : audio ---------- */
 document.getElementById('btn-enregistrer').addEventListener('click', demarrerEnregistrement);
