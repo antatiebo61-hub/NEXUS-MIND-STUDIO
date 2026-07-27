@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Constat Sinistre — Nexus Mind Studio</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- EN-TÊTE -->
+  <header class="topbar">
+    <img src="logo.png" alt="" class="logo">
+    <div class="titre-bloc">
+      <div class="brand">NEXUS MIND STUDIO</div>
+      <div class="souscription">Constat Sinistre — Preuve Numérique</div>
+    </div>
+    <button class="btn-reglages" id="btn-reglages" title="Connecter un backend">⚙️</button>
+  </header>
+
+  <!-- MODALE : BRANCHEMENT BACKEND (optionnel, ne change rien si non configuré) -->
+  <div class="modale-fond" id="modale-reglages" style="display:none">
+    <div class="modale">
+      <div class="modale-titre">🔌 Connecter votre backend</div>
+      <div class="modale-texte">Optionnel. Si vous laissez vide, le dossier reste dans la démo (comme maintenant). Si vous renseignez une adresse, chaque dossier validé sera envoyé directement chez vous.</div>
+
+      <label class="modale-label">Adresse de votre API (URL)</label>
+      <input type="url" id="input-backend-url" class="modale-input" placeholder="https://votre-serveur.com/api/constats">
+
+      <label class="modale-label">Clé API (si votre serveur en demande une)</label>
+      <input type="text" id="input-backend-key" class="modale-input" placeholder="Optionnel">
+
+      <div class="modale-boutons">
+        <button class="bouton-secondaire" id="btn-effacer-backend">Effacer</button>
+        <button class="bouton-principal" id="btn-sauver-backend">Enregistrer</button>
+      </div>
+      <button class="modale-fermer" id="btn-fermer-reglages">Fermer</button>
+    </div>
+  </div>
+
+  <!-- BARRE DE PROGRESSION (5 étapes) -->
+  <div class="progression" id="progression">
+    <div class="etape-point active" data-etape="1"></div>
+    <div class="etape-point" data-etape="2"></div>
+    <div class="etape-point" data-etape="3"></div>
+    <div class="etape-point" data-etape="4"></div>
+    <div class="etape-point" data-etape="5"></div>
+  </div>
+
+  <!-- ============ ÉTAPE 1 : TYPE DE SINISTRE ============ -->
+  <section class="ecran" id="ecran-1" data-etape="1">
+    <div class="question">Quel est le problème ?</div>
+
+    <div class="choix-grille" id="liste-sinistres">
+      <button class="choix-carte" data-valeur="Dégâts sur Arachide (Gerte)">
+        <span class="choix-icone">🥜</span>
+        <span class="choix-texte">Arachide<br><small>Gerte</small></span>
+      </button>
+      <button class="choix-carte" data-valeur="Dégâts sur Mil (Dugub)">
+        <span class="choix-icone">🌾</span>
+        <span class="choix-texte">Mil<br><small>Dugub</small></span>
+      </button>
+      <button class="choix-carte" data-valeur="Dégâts sur Maïs (Mburu-mburu)">
+        <span class="choix-icone">🌽</span>
+        <span class="choix-texte">Maïs</span>
+      </button>
+      <button class="choix-carte" data-valeur="Dégâts sur Riz (Ceeb)">
+        <span class="choix-icone">🌱</span>
+        <span class="choix-texte">Riz<br><small>Ceeb</small></span>
+      </button>
+      <button class="choix-carte" data-valeur="Dégâts sur Niébé (Niebe)">
+        <span class="choix-icone">🫘</span>
+        <span class="choix-texte">Niébé</span>
+      </button>
+      <button class="choix-carte" data-valeur="Autre dégât / Bétail">
+        <span class="choix-icone">🐄</span>
+        <span class="choix-texte">Autre /<br>Bétail</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ============ ÉTAPE 2 : PHOTO ============ -->
+  <section class="ecran" id="ecran-2" data-etape="2" style="display:none">
+    <div class="question">Prenez une photo du dégât</div>
+
+    <div class="zone-capture" id="zone-photo">
+      <div class="capture-vide" id="photo-vide">
+        <div class="gros-icone">📷</div>
+        <div class="capture-label">Prendre une photo</div>
+      </div>
+      <img id="photo-apercu" class="photo-apercu" style="display:none">
+    </div>
+
+    <input type="file" id="input-photo" accept="image/*" capture="environment" style="display:none">
+
+    <button class="bouton-principal" id="btn-ouvrir-camera">📷 Prendre une photo</button>
+    <button class="bouton-secondaire" id="btn-reprendre-photo" style="display:none">🔄 Reprendre la photo</button>
+  </section>
+
+  <!-- ============ ÉTAPE 3 : AUDIO ============ -->
+  <section class="ecran" id="ecran-3" data-etape="3" style="display:none">
+    <div class="question">Expliquez le problème<br><small>à voix haute (wolof ou français)</small></div>
+
+    <div class="zone-capture">
+      <div class="gros-icone" id="icone-micro">🎙️</div>
+      <div class="capture-label" id="statut-audio">Appuyez pour enregistrer</div>
+      <div class="chrono" id="chrono-audio" style="display:none">00:00</div>
+    </div>
+
+    <button class="bouton-principal" id="btn-enregistrer">🎙️ Démarrer l'enregistrement</button>
+    <button class="bouton-danger" id="btn-arreter" style="display:none">⏹ Arrêter l'enregistrement</button>
+    <button class="bouton-secondaire" id="btn-reecouter" style="display:none">▶️ Réécouter l'enregistrement</button>
+    <audio id="lecteur-audio" style="display:none"></audio>
+  </section>
+
+  <!-- ============ ÉTAPE 4 : LOCALISATION (auto) ============ -->
+  <section class="ecran" id="ecran-4" data-etape="4" style="display:none">
+    <div class="question">Localisation du terrain</div>
+
+    <div class="zone-capture">
+      <div class="gros-icone" id="icone-gps">📍</div>
+      <div class="capture-label" id="statut-gps">Recherche du signal GPS...</div>
+      <div class="gps-coords" id="gps-coords"></div>
+    </div>
+
+    <button class="bouton-secondaire" id="btn-refaire-gps">🔄 Réessayer la localisation</button>
+  </section>
+
+  <!-- ============ ÉTAPE 5 : RÉSUMÉ / PREUVE COMPLÈTE ============ -->
+  <section class="ecran" id="ecran-5" data-etape="5" style="display:none">
+    <div class="question">Résumé du dossier</div>
+
+    <div class="fiche-resume">
+      <div class="fiche-ligne">
+        <span class="fiche-cle">🆔 N° Dossier</span>
+        <span class="fiche-val" id="resume-id">—</span>
+      </div>
+      <div class="fiche-ligne">
+        <span class="fiche-cle">🕒 Date &amp; heure</span>
+        <span class="fiche-val" id="resume-date">—</span>
+      </div>
+      <div class="fiche-ligne">
+        <span class="fiche-cle">🌾 Type de sinistre</span>
+        <span class="fiche-val" id="resume-type">—</span>
+      </div>
+      <div class="fiche-ligne">
+        <span class="fiche-cle">📍 GPS</span>
+        <span class="fiche-val" id="resume-gps">—</span>
+      </div>
+      <div class="fiche-ligne">
+        <span class="fiche-cle">📷 Photo</span>
+        <span class="fiche-val" id="resume-photo">✓ Capturée</span>
+      </div>
+      <div class="fiche-ligne">
+        <span class="fiche-cle">🎙️ Déclaration vocale</span>
+        <span class="fiche-val" id="resume-audio">✓ Enregistrée</span>
+      </div>
+    </div>
+
+    <img id="resume-photo-apercu" class="photo-resume">
+    <button class="bouton-secondaire" id="btn-reecouter-resume">▶️ Réécouter la déclaration</button>
+
+    <div class="preuve-badge">✅ PREUVE NUMÉRIQUE COMPLÈTE</div>
+    <div class="backend-statut" id="backend-statut"></div>
+
+    <button class="bouton-principal bouton-valider" id="btn-valider">📄 Valider et enregistrer le dossier</button>
+    <button class="bouton-secondaire" id="btn-nouveau">➕ Nouveau constat</button>
+  </section>
+
+  <!-- BARRE DE NAVIGATION BAS -->
+  <nav class="nav-bas">
+    <button class="nav-btn" id="btn-precedent">◀ Précédent</button>
+    <button class="nav-btn nav-btn-principal" id="btn-suivant">Suivant ▶</button>
+  </nav>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
