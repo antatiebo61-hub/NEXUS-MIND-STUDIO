@@ -1,5 +1,8 @@
 /* =========================================================================
    NEXUS MIND STUDIO — CONSTAT SINISTRE (démo terrain, très simple)
+   Fonctions : photo, audio, GPS, horodatage, ID dossier, résumé
+   Compatible Netlify (site statique) et Android (Chrome mobile, HTTPS requis
+   pour l'accès caméra/micro/GPS).
    ========================================================================= */
 
 const dossier = {
@@ -19,6 +22,7 @@ let audioChunks = [];
 let chronoInterval = null;
 let chronoSecondes = 0;
 
+/* ---------- Utilitaires ---------- */
 function showToast(msg){
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -47,9 +51,11 @@ function formatDateHeure(date){
   return `${j} ${dd}/${mm}/${yy} à ${hh}h${mi}`;
 }
 
+/* ---------- Navigation entre étapes ---------- */
 function allerEtape(n){
   if(n < 1 || n > NB_ETAPES) return;
 
+  // Garde-fous simples : ne pas avancer sans avoir fait l'étape
   if(n > etapeActuelle){
     if(etapeActuelle===1 && !dossier.typeSinistre){
       showToast('⚠ Choisissez le type de sinistre avant de continuer.');
@@ -91,83 +97,53 @@ function allerEtape(n){
 document.getElementById('btn-precedent').addEventListener('click', ()=>allerEtape(etapeActuelle-1));
 document.getElementById('btn-suivant').addEventListener('click', ()=>allerEtape(etapeActuelle+1));
 
+/* ---------- ÉTAPE 1 : type de sinistre ---------- */
 document.querySelectorAll('.choix-carte').forEach(carte=>{
   carte.addEventListener('click', ()=>{
     document.querySelectorAll('.choix-carte').forEach(c=>c.classList.remove('selectionne'));
     carte.classList.add('selectionne');
     dossier.typeSinistre = carte.dataset.valeur;
-    setTimeout(()=>allerEtape(2), 250);
+    setTimeout(()=>allerEtape(2), 250); // avance automatiquement, un choix = une action
   });
 });
 
+/* ---------- ÉTAPE 2 : photo ---------- */
 const inputPhoto = document.getElementById('input-photo');
 document.getElementById('btn-ouvrir-camera').addEventListener('click', ()=>inputPhoto.click());
 document.getElementById('btn-reprendre-photo').addEventListener('click', ()=>inputPhoto.click());
 
 inputPhoto.addEventListener('change', (e)=>{
   const file = e.target.files[0];
-  if(!file) return;
+  if(!file){
+    showToast('⚠ Aucune photo reçue — réessayez.');
+    return;
+  }
 
-  document.getElementById('photo-vide').style.display = 'flex';
-  document.getElementById('photo-vide').innerHTML = `
-    <div class="gros-icone">⏳</div>
-    <div class="capture-label">Traitement de la photo...</div>`;
-  document.getElementById('photo-apercu').style.display = 'none';
+  // Méthode la plus simple et la plus fiable : on affiche directement le
+  // fichier tel quel via une URL objet, sans conversion ni compression
+  // (qui pouvaient bloquer sur certains téléphones).
+  dossier.photoFile = file;
+  dossier.photoDataUrl = URL.createObjectURL(file);
 
-  const imgTemp = new Image();
-  const urlTemp = URL.createObjectURL(file);
-
-  imgTemp.onload = ()=>{
-    try{
-      const MAX_LARGEUR = 1280;
-      let {width, height} = imgTemp;
-      if(width > MAX_LARGEUR){
-        height = Math.round(height * (MAX_LARGEUR/width));
-        width = MAX_LARGEUR;
-      }
-      const canvas = document.createElement('canvas');
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(imgTemp, 0, 0, width, height);
-      dossier.photoDataUrl = canvas.toDataURL('image/jpeg', 0.8);
-      URL.revokeObjectURL(urlTemp);
-
-      document.getElementById('photo-vide').style.display = 'none';
-      const img = document.getElementById('photo-apercu');
-      img.src = dossier.photoDataUrl;
-      img.style.display = 'block';
-      document.getElementById('btn-ouvrir-camera').style.display = 'none';
-      document.getElementById('btn-reprendre-photo').style.display = 'block';
-      showToast('✓ Photo enregistrée.');
-    }catch(err){
-      URL.revokeObjectURL(urlTemp);
-      afficherErreurPhoto();
-    }
-  };
-
-  imgTemp.onerror = ()=>{
-    URL.revokeObjectURL(urlTemp);
-    afficherErreurPhoto();
-  };
-
-  imgTemp.src = urlTemp;
+  document.getElementById('photo-vide').style.display = 'none';
+  const img = document.getElementById('photo-apercu');
+  img.src = dossier.photoDataUrl;
+  img.style.display = 'block';
+  document.getElementById('btn-ouvrir-camera').style.display = 'none';
+  document.getElementById('btn-reprendre-photo').style.display = 'block';
+  showToast('✓ Photo enregistrée.');
 });
 
-function afficherErreurPhoto(){
-  document.getElementById('photo-vide').innerHTML = `
-    <div class="gros-icone">📷</div>
-    <div class="capture-label">Prendre une photo</div>`;
-  showToast('⚠ La photo n\'a pas pu être chargée. Réessayez.');
-}
-
+/* ---------- ÉTAPE 3 : audio ---------- */
 document.getElementById('btn-enregistrer').addEventListener('click', demarrerEnregistrement);
 document.getElementById('btn-arreter').addEventListener('click', arreterEnregistrement);
 document.getElementById('btn-reecouter').addEventListener('click', ()=>{
-  document.getElementById('lecteur-audio').play();
+  const lecteur = document.getElementById('lecteur-audio');
+  lecteur.play();
 });
 document.getElementById('btn-reecouter-resume').addEventListener('click', ()=>{
-  document.getElementById('lecteur-audio').play();
+  const lecteur = document.getElementById('lecteur-audio');
+  lecteur.play();
 });
 
 async function demarrerEnregistrement(){
@@ -179,7 +155,8 @@ async function demarrerEnregistrement(){
     mediaRecorder.onstop = ()=>{
       dossier.audioBlob = new Blob(audioChunks, {type:'audio/webm'});
       dossier.audioUrl = URL.createObjectURL(dossier.audioBlob);
-      document.getElementById('lecteur-audio').src = dossier.audioUrl;
+      const lecteur = document.getElementById('lecteur-audio');
+      lecteur.src = dossier.audioUrl;
       stream.getTracks().forEach(t=>t.stop());
     };
     mediaRecorder.start();
@@ -201,7 +178,7 @@ async function demarrerEnregistrement(){
     }, 1000);
 
   }catch(err){
-    showToast('⚠ Micro refusé — autorisez l\'accès au microphone.');
+    showToast('⚠ Micro refusé — autorisez l\'accès au microphone dans les paramètres du navigateur.');
   }
 }
 
@@ -218,6 +195,7 @@ function arreterEnregistrement(){
   showToast('✓ Déclaration vocale enregistrée.');
 }
 
+/* ---------- ÉTAPE 4 : GPS ---------- */
 document.getElementById('btn-refaire-gps').addEventListener('click', demarrerGPS);
 
 function demarrerGPS(){
@@ -242,7 +220,7 @@ function demarrerGPS(){
       document.getElementById('gps-coords').textContent =
         `${dossier.gps.lat.toFixed(4)}° N, ${dossier.gps.lon.toFixed(4)}° W · précision ±${Math.round(dossier.gps.precision)}m`;
     },
-    ()=>{
+    (err)=>{
       document.getElementById('icone-gps').textContent = '⚠️';
       document.getElementById('statut-gps').textContent = 'Localisation refusée ou indisponible.';
     },
@@ -250,6 +228,7 @@ function demarrerGPS(){
   );
 }
 
+/* ---------- Branchement backend (optionnel — LocalStorage, rien codé en dur) ---------- */
 const CLE_URL = 'nms_constat_backend_url';
 const CLE_KEY = 'nms_constat_backend_key';
 
@@ -271,7 +250,7 @@ document.getElementById('btn-sauver-backend').addEventListener('click', ()=>{
   if(url) localStorage.setItem(CLE_URL, url); else localStorage.removeItem(CLE_URL);
   if(key) localStorage.setItem(CLE_KEY, key); else localStorage.removeItem(CLE_KEY);
   modaleReglages.style.display = 'none';
-  showToast(url ? '✓ Backend connecté.' : '✓ Mode démo local.');
+  showToast(url ? '✓ Backend connecté : les prochains dossiers seront envoyés.' : '✓ Réglages effacés — mode démo local.');
 });
 document.getElementById('btn-effacer-backend').addEventListener('click', ()=>{
   localStorage.removeItem(CLE_URL);
@@ -280,6 +259,55 @@ document.getElementById('btn-effacer-backend').addEventListener('click', ()=>{
   document.getElementById('input-backend-key').value = '';
 });
 
+/* Convertit une dataURL (photo) en Blob, pour l'envoi en multipart/form-data */
+function dataUrlVersBlob(dataUrl){
+  const [entete, base64] = dataUrl.split(',');
+  const mime = entete.match(/:(.*?);/)[1];
+  const bin = atob(base64);
+  const arr = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) arr[i] = bin.charCodeAt(i);
+  return new Blob([arr], {type:mime});
+}
+
+/* Envoie le dossier complet (photo + audio + métadonnées) vers le backend
+   configuré, en multipart/form-data. N'a AUCUN effet si aucune URL n'est
+   configurée — la démo continue de fonctionner exactement comme avant. */
+async function envoyerVersBackend(){
+  const url = getBackendUrl();
+  if(!url) return {envoye:false, message:null}; // pas de backend configuré, rien à faire
+
+  const form = new FormData();
+  form.append('id', dossier.id);
+  form.append('date_heure', dossier.dateHeure.toISOString());
+  form.append('type_sinistre', dossier.typeSinistre || '');
+  if(dossier.gps){
+    form.append('gps_lat', dossier.gps.lat);
+    form.append('gps_lon', dossier.gps.lon);
+    form.append('gps_precision_m', dossier.gps.precision);
+  }
+  if(dossier.photoFile){
+    form.append('photo', dossier.photoFile, `${dossier.id}_photo.jpg`);
+  }
+  if(dossier.audioBlob){
+    form.append('audio', dossier.audioBlob, `${dossier.id}_audio.webm`);
+  }
+
+  const headers = {};
+  const cle = getBackendKey();
+  if(cle) headers['Authorization'] = `Bearer ${cle}`;
+
+  try{
+    const reponse = await fetch(url, {method:'POST', body:form, headers});
+    if(reponse.ok){
+      return {envoye:true, message:'✓ Dossier envoyé avec succès à votre backend.'};
+    }
+    return {envoye:false, message:`⚠ Le serveur a répondu une erreur (${reponse.status}). Le dossier reste en local.`};
+  }catch(err){
+    return {envoye:false, message:'⚠ Échec de connexion au backend (URL injoignable ou CORS). Le dossier reste en local.'};
+  }
+}
+
+/* ---------- ÉTAPE 5 : résumé ---------- */
 function remplirResume(){
   if(!dossier.id){
     dossier.id = genererIdDossier();
@@ -301,17 +329,36 @@ function remplirResume(){
   const statutEl = document.getElementById('backend-statut');
   statutEl.className = 'backend-statut';
   statutEl.textContent = getBackendUrl()
-    ? '🔌 Backend connecté — ce dossier sera envoyé.'
-    : '💾 Mode démo local.';
+    ? '🔌 Backend connecté — ce dossier sera envoyé à la validation.'
+    : '💾 Mode démo local (aucun backend connecté — voir ⚙️ en haut).';
 }
 
-document.getElementById('btn-valider').addEventListener('click', ()=>{
-  showToast('✓ Dossier enregistré avec succès : ' + dossier.id);
+document.getElementById('btn-valider').addEventListener('click', async ()=>{
+  const btn = document.getElementById('btn-valider');
+  const statutEl = document.getElementById('backend-statut');
+  const backendConfigure = !!getBackendUrl();
+
+  if(backendConfigure){
+    btn.disabled = true;
+    btn.textContent = '⏳ Envoi en cours...';
+    statutEl.textContent = 'Connexion à votre backend...';
+    statutEl.className = 'backend-statut';
+
+    const resultat = await envoyerVersBackend();
+
+    btn.disabled = false;
+    btn.textContent = '📄 Valider et enregistrer le dossier';
+    statutEl.textContent = resultat.message;
+    statutEl.className = 'backend-statut ' + (resultat.envoye ? 'ok' : 'erreur');
+    showToast(resultat.envoye ? '✓ Dossier envoyé : ' + dossier.id : '⚠ Envoi échoué — voir le détail à l\'écran.');
+  }else{
+    showToast('✓ Dossier enregistré (mode démo local) : ' + dossier.id);
+  }
 });
 
 document.getElementById('btn-nouveau').addEventListener('click', ()=>{
   location.reload();
 });
 
+/* Initialisation : bouton précédent désactivé sur la 1ère étape */
 document.getElementById('btn-precedent').disabled = true;
-```[cite: 1]
